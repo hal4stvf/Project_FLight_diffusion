@@ -12,7 +12,8 @@ Dann das Projekt compilen:
 
 	stack ghc -- --make Main.hs
 
-
+Immer alles adden und commit. Durch die .gitignore werden manche
+systemindividuelle Dateien ignoiert.
 
 
 
