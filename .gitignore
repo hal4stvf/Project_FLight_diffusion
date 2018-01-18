@@ -5,3 +5,5 @@
 *.hi
 Main
 
+Makefile
+MainRandom
