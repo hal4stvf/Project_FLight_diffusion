@@ -17,10 +17,10 @@ move (xdim, ydim) "\"l\"" (x, y) = ((x + 1) `mod` xdim, y)
 move _ _ x = x
 
 --getcolor :: [Int] -> ([Int],Int)
---getcolor x:xs = (xs,x)
+--getcolor xs = (tail xs,head xs)
 
 --------------------------------------------------------------------------
--- aktueller Stand: bekommt Feldgröße, Pixel und Farbe
+-- aktueller Stand: bekommt dim, Pixel und Farbe
 -- färbt Pixel entsprechend der Farbe, den Rest schwarz
 -- gibt ein Pixelfeld zurück (Listframe)
 
@@ -32,8 +32,12 @@ toFrame (xdim, ydim) (x', y') col
 
 --------------------------------------------------------------------------
 -- bekommt eine Liste von Events (siehe Simple.hs) und ein Pixel
--- setzt
--- gibt ein Tupel aus Pixelfeld und Pixel zurück
+-- pixel' wendet eine Fkt. nach und nach auf das Pixel und alle bekommenen Events an
+--   wenn etwas eingelesen wird, setzt runMateM (siehe MateLight.hs) das Event "KEYBOARD" [c] (Z. 86/87);
+--   dementsprechend checkt die Funktion, ob das aktuell ausgelesene Event ein KEYBOARD-Event ist
+--   falls ja: move wird mit dim, der eingelesenen Taste und dem Pixel aufgerufen (Bewegung wird ausgeführt), zurück kommt die neue Position des Pixels
+--   falls nein: Pixelposition bleibt gleich
+-- gibt ein Tupel aus dem entsprechend der Events veränderten Pixelfeld und der aktuellen Pixelposition zurück
 
 eventTest :: [Event String] -> (Int, Int) -> (ListFrame, (Int, Int))
 eventTest events pixel = (toFrame dim pixel' 2, helper pixel')
@@ -46,9 +50,11 @@ eventTest events pixel = (toFrame dim pixel' 2, helper pixel')
 --------------------------------------------------------------------------
 -- globale, statische Variablen:
 
+-- Farben
 colors :: [[Word8]]
 colors = [[0xff,0,0],[0,0xff,0],[0,0,0xff],[0xff,0xff,0xff]]
 
+-- Feldgröße
 dim :: (Int, Int)
 dim = (30, 12)
 
