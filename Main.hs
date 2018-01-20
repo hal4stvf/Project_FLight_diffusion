@@ -35,7 +35,7 @@ toFrame (xdim, ydim) ((x', y'), col) level
   map (\y -> map (\x -> if x == x' && y == y'
     then Pixel ((colors !! (col `mod` 4)) !! 0) ((colors !! (col `mod` 4)) !! 1) ((colors !! (col `mod` 4)) !! 2)
     else (if any (==(x,y)) (level !! 0) then Pixel 0xff 0 0
-      else (if any (==(x,y)) (level !! 2) then Pixel 0 0xff 0
+      else (if any (==(x,y)) (level !! 1) then Pixel 0 0xff 0
         else Pixel 0 0 0xff))) [0 .. xdim - 1]) [0 .. ydim - 1]
 
 --------------------------------------------------------------------------
@@ -53,7 +53,7 @@ eventTest :: [Event String] -> ((Int, Int), Int) -> (ListFrame, ((Int, Int), Int
 eventTest events (pixel, color) = (toFrame dim pixel' level, helper pixel')
   where
     pixel' = foldl (\(acc,c) (Event mod ev) -> if mod == "KEYBOARD" then (if ev == "\"c\"" then changeColor (acc,c) else move dim ev (acc,c)) else (acc,c)) (pixel, color) events
-    level = [[(x,y)| x <- [0..9], y <- [0..11]],[(x,y)| x <- [10..19], y <- [0..11]],[(x,y)| x <- [20..29], y <- [0..11]]]
+    level = [[(x,y)| y <- [0..11], x <- [0..y]++[29-y..29]],[(x,y)| x <- [8..21], y <- [8..12]],[(x,y)| x <- [22..29], y <- [0..11]]]
     helper = id
 --------------------------------------------------------------------------
 
