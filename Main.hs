@@ -25,7 +25,7 @@ changeColor :: ((Int, Int), Int) -> ((Int, Int), Int)
 changeColor (x,c) = (x, c+1)
 
 --------------------------------------------------------------------------
--- aktueller Stand: bekommt dim und Status
+-- aktueller Stand: bekommt dim, Curser-Status und level
 -- färbt Pixel entsprechend der Farbe, den Rest schwarz
 -- gibt ein Pixelfeld zurück (Listframe)
 
@@ -47,13 +47,13 @@ toFrame (xdim, ydim) ((x', y'), col) level
 --       falls ja: übergebe changeColor den Status (neuer, farnveränderter Status kommt zurück)
 --       falls nein: übergebe move dim, die eingelesene Taste und den Status aufgerufen (neuer, bewegter Status kommt zurück)
 --   falls nein: Pixelposition bleibt gleich
--- gibt ein Tupel aus dem entsprechend der Events veränderten Pixelfeld und dem Status zurück
+-- gibt ein Tupel aus dem entsprechend der Events veränderten Pixelfeld (aufgerufen mit toFrame dim pixel' level) und dem Status zurück
 
 eventTest :: [Event String] -> ((Int, Int), Int) -> (ListFrame, ((Int, Int), Int))
 eventTest events (pixel, color) = (toFrame dim pixel' level, helper pixel')
   where
     pixel' = foldl (\(acc,c) (Event mod ev) -> if mod == "KEYBOARD" then (if ev == "\"c\"" then changeColor (acc,c) else move dim ev (acc,c)) else (acc,c)) (pixel, color) events
-    level = [[(x,y)| x <- [0..10], y <- [0..11]],[(x,y)| x <- [11..20], y <- [0..11]],[(x,y)| x <- [21..29], y <- [0..11]]]
+    level = [[(x,y)| x <- [0..9], y <- [0..11]],[(x,y)| x <- [10..19], y <- [0..11]],[(x,y)| x <- [20..29], y <- [0..11]]]
     helper = id
 --------------------------------------------------------------------------
 
