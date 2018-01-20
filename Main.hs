@@ -25,35 +25,35 @@ changeColor :: ((Int, Int), Int) -> ((Int, Int), Int)
 changeColor (x,c) = (x, c+1)
 
 --------------------------------------------------------------------------
--- aktueller Stand: bekommt dim, Pixel und Farbe
+-- aktueller Stand: bekommt dim und Status
 -- färbt Pixel entsprechend der Farbe, den Rest schwarz
 -- gibt ein Pixelfeld zurück (Listframe)
 
-toFrame :: (Int, Int) -> ((Int, Int), Int) -> ListFrame
-toFrame (xdim, ydim) ((x', y'), col)
+toFrame :: (Int, Int) -> ((Int, Int), Int) -> [[(Int,Int)]] -> ListFrame
+toFrame (xdim, ydim) ((x', y'), col) level
  = ListFrame $
-  map (\y -> map (\x -> if x == x' && y == y' then Pixel ((colors !! (col `mod` 4)) !! 0) ((colors !! (col `mod` 4)) !! 1) ((colors !! (col `mod` 4)) !! 2) else Pixel 0 0 0) [0 .. xdim - 1])
-  [0 .. ydim - 1]
+  map (\y -> map (\x -> if x == x' && y == y'
+    then Pixel ((colors !! (col `mod` 4)) !! 0) ((colors !! (col `mod` 4)) !! 1) ((colors !! (col `mod` 4)) !! 2)
+    else (if any (==(x,y)) (level !! 0) then Pixel 0xff 0 0
+      else (if any (==(x,y)) (level !! 2) then Pixel 0 0xff 0
+        else Pixel 0 0 0xff))) [0 .. xdim - 1]) [0 .. ydim - 1]
 
 --------------------------------------------------------------------------
--- bekommt eine Liste von Events (siehe Simple.hs) und ein Pixel
+-- bekommt eine Liste von Events (siehe Simple.hs) und einen Status (Pixel, Farbe)
 -- pixel' wendet eine Fkt. nach und nach auf das Pixel und alle bekommenen Events an
 --   wenn etwas eingelesen wird, setzt runMateM (siehe MateLight.hs) das Event "KEYBOARD" [c] (Z. 86/87);
 --   dementsprechend checkt die Funktion, ob das aktuell ausgelesene Event ein KEYBOARD-Event ist
---   falls ja: move wird mit dim, der eingelesenen Taste und dem Pixel aufgerufen (Bewegung wird ausgeführt), zurück kommt die neue Position des Pixels
+--   falls ja: checke, ob ein c eingelesen wurde
+--       falls ja: übergebe changeColor den Status (neuer, farnveränderter Status kommt zurück)
+--       falls nein: übergebe move dim, die eingelesene Taste und den Status aufgerufen (neuer, bewegter Status kommt zurück)
 --   falls nein: Pixelposition bleibt gleich
--- gibt ein Tupel aus dem entsprechend der Events veränderten Pixelfeld und der aktuellen Pixelposition zurück
-
--- eventTest :: [Event String] -> (Int, Int) -> (ListFrame, (Int, Int))
--- eventTest events pixel = (toFrame dim pixel' 2, helper pixel')
---  where
---    pixel' = foldl (\acc (Event mod ev) -> if mod == "KEYBOARD" then move dim ev acc else acc) pixel events
---    helper = id
+-- gibt ein Tupel aus dem entsprechend der Events veränderten Pixelfeld und dem Status zurück
 
 eventTest :: [Event String] -> ((Int, Int), Int) -> (ListFrame, ((Int, Int), Int))
-eventTest events (pixel, color) = (toFrame dim pixel', helper pixel')
+eventTest events (pixel, color) = (toFrame dim pixel' level, helper pixel')
   where
     pixel' = foldl (\(acc,c) (Event mod ev) -> if mod == "KEYBOARD" then (if ev == "\"c\"" then changeColor (acc,c) else move dim ev (acc,c)) else (acc,c)) (pixel, color) events
+    level = [[(x,y)| x <- [0..10], y <- [0..11]],[(x,y)| x <- [11..20], y <- [0..11]],[(x,y)| x <- [21..29], y <- [0..11]]]
     helper = id
 --------------------------------------------------------------------------
 

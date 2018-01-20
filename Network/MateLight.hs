@@ -68,7 +68,7 @@ whileM cond action = do
 runMateM :: forall f s . (Frame f) => Config -> ([EventT] -> MateMonad f s IO f) -> s -> IO ()
 runMateM conf fkt s = do
   -- Change socket code
-  sock <- Sock.socket Sock.AF_INET Sock.Datagram Sock.defaultProtocol 
+  sock <- Sock.socket Sock.AF_INET Sock.Datagram Sock.defaultProtocol
   case cAddr conf of
     IPv4 ip -> Sock.connect sock $ Sock.SockAddrInet (cPort conf) (toHostAddress ip)
     IPv6 ip -> Sock.connect sock $ Sock.SockAddrInet6 (cPort conf) 0 (toHostAddress6 ip) 0
