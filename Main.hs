@@ -9,20 +9,20 @@ import qualified Network.Socket as Sock
 --
 --
 
-move :: (Int, Int) -> String -> (Int, Int) -> Int -> ((Int, Int), Int)
-move (xdim, ydim) "\"j\"" (x, y) c = ((x, (y + 1) `mod` ydim), c)
-move (xdim, ydim) "\"k\"" (x, y) c = ((x, (y - 1) `mod` ydim), c)
-move (xdim, ydim) "\"h\"" (x, y) c = (((x - 1) `mod` xdim, y), c)
-move (xdim, ydim) "\"l\"" (x, y) c = (((x + 1) `mod` xdim, y), c)
-move _ _ x c = (x, c)
+move :: (Int, Int) -> String -> ((Int, Int), Int) -> ((Int, Int), Int)
+move (xdim, ydim) "\"j\"" ((x, y), c) = ((x, (y + 1) `mod` ydim), c)
+move (xdim, ydim) "\"k\"" ((x, y), c) = ((x, (y - 1) `mod` ydim), c)
+move (xdim, ydim) "\"h\"" ((x, y), c) = (((x - 1) `mod` xdim, y), c)
+move (xdim, ydim) "\"l\"" ((x, y), c) = (((x + 1) `mod` xdim, y), c)
+move _ _ x = x
 
 --------------------------------------------------------------------------
+-- input: alle Status (also aktuelles Curser-Pixel und Farbe)
+-- erhöht den Color-Status um 1, darf nur aufgerufen werden, wenn c gedrückt wurde
+-- output: alle Status (also aktuelles Curser-Pixel und Farbe)
 
-changeColor :: (Int, Int) -> Int -> ((Int, Int), Int)
-changeColor x c = (x, c+1)
-
-
---------------------------------------------------------------------------
+changeColor :: ((Int, Int), Int) -> ((Int, Int), Int)
+changeColor (x,c) = (x, c+1)
 
 --------------------------------------------------------------------------
 -- aktueller Stand: bekommt dim, Pixel und Farbe
@@ -53,7 +53,7 @@ toFrame (xdim, ydim) ((x', y'), col)
 eventTest :: [Event String] -> ((Int, Int), Int) -> (ListFrame, ((Int, Int), Int))
 eventTest events (pixel, color) = (toFrame dim pixel', helper pixel')
   where
-    pixel' = foldl (\(acc,c) (Event mod ev) -> if mod == "KEYBOARD" then (if ev == "\"c\"" then changeColor acc c else move dim ev acc c) else (acc,c)) (pixel, color) events
+    pixel' = foldl (\(acc,c) (Event mod ev) -> if mod == "KEYBOARD" then (if ev == "\"c\"" then changeColor (acc,c) else move dim ev (acc,c)) else (acc,c)) (pixel, color) events
     helper = id
 --------------------------------------------------------------------------
 
