@@ -59,6 +59,14 @@ level = [[(x,y)| y <- [0..11], x <- [0..y]++[29-y..29]],[(x,y)| x <- [8..21], y 
 
 --------------------------------------------------------------------------
 -- globale, statische Variablen:
+--
+data myState = myState {
+   curpos    :: (Int, Int)  
+  ,curcolcos :: Int
+  ,gameplay  :: [((Int,Int),Int)]
+  ,levels    :: [[[(Int,Int)]]]
+  ,curlevel  :: Int
+} deriving (Eq, Ord, Show, Read)
 
 -- Farben
 colors :: [[Word8]]
