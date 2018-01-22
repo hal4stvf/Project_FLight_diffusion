@@ -9,60 +9,62 @@ import qualified Network.Socket as Sock
 --
 --
 move :: (Int, Int) -> String -> MyState -> MyState
-move (xdim, ydim) "\"j\"" myState 
+move (xdim, ydim) "\"j\"" myState
   = myState {curpos = (\ (x,y) -> (x, (y + 1) `mod` ydim)) (curpos myState)}
-move (xdim, ydim) "\"k\"" myState 
+move (xdim, ydim) "\"k\"" myState
   = myState {curpos = (\ (x,y) -> (x, (y - 1) `mod` ydim)) (curpos myState)}
-move (xdim, ydim) "\"h\"" myState 
+move (xdim, ydim) "\"h\"" myState
   = myState {curpos = (\ (x,y) -> ((x - 1) `mod` xdim, y)) (curpos myState)}
-move (xdim, ydim) "\"l\"" myState 
+move (xdim, ydim) "\"l\"" myState
   = myState {curpos = (\ (x,y) -> ((x + 1) `mod` xdim, y)) (curpos myState)}
 move _ _ x = x
 
---------------------------------------------------------------------------
--- input: alle Status (also aktuelles Curser-Pixel und Farbe)
--- erhöht den Color-Status um 1, darf nur aufgerufen werden, wenn c gedrückt wurde
+--------------------------------------------------------------------------------
+-- input: alle Status
+-- erhöht den Color-Status um 1; Aufruf, wenn c gedrückt wurde
 -- output: alle Status (also aktuelles Curser-Pixel und Farbe)
 
 changeColor :: MyState -> MyState
-changeColor myState = myState {curcolcos = ((curcolcos myState) + 1) `mod` 4} 
+changeColor myState = myState {curcolcos = ((curcolcos myState) + 1) `mod` 4}
 
---------------------------------------------------------------------------
--- aktueller Stand: bekommt dim, Curser-Status und level
--- färbt Pixel entsprechend der Farbe, den Rest schwarz
+--------------------------------------------------------------------------------
+-- bekommt dim und Status
+-- färbt Cursor entsprechend der Cursor-Farbe
+-- rest bleibt momentan noch gleich
 -- gibt ein Pixelfeld zurück (Listframe)
 
 toFrame :: (Int, Int) -> MyState -> ListFrame
-toFrame (xdim, ydim) myState 
+toFrame (xdim, ydim) myState
  = ListFrame $ con2frame (topicture (levels myState !! curlevel myState))
-  where 
+  where
     topicture [] = []
     topicture (((x,y), pixelcol): xs)
-      | curpos myState == (x,y)    = ((x,y),colors !! curcolcos myState) : (topicture xs) 
-      | otherwise                   = ((x,y), pixelcol) : (topicture xs)  
+      | curpos myState == (x,y)    = ((x,y),colors !! curcolcos myState) : (topicture xs)
+      | otherwise                   = ((x,y), pixelcol) : (topicture xs)
     con2frame [] = []
-    con2frame xs = [[ c | ((x,y), c) <- (take (xdim -1) xs) ]] ++ con2frame (drop (xdim -1) xs) 
+    con2frame xs = [[ c | ((x,y), c) <- (take (xdim -1) xs) ]] ++ con2frame (drop (xdim -1) xs)
 
---------------------------------------------------------------------------
--- bekommt eine Liste von Events (siehe Simple.hs) und einen Status myState  
--- helper wendet eine Fkt. nach und nach auf das Pixel und alle bekommenen Events an
---   wenn etwas eingelesen wird, setzt runMateM (siehe MateLight.hs) das Event "KEYBOARD" [c] (Z. 86/87);
---   dementsprechend checkt die Funktion, ob das aktuell ausgelesene Event ein KEYBOARD-Event ist
---   falls ja: checke, ob ein c eingelesen wurde
---       falls ja: übergebe changeColor den Status (neuer, farnveränderter Status kommt zurück)
---       falls nein: übergebe move dim, die eingelesene Taste und den Status aufgerufen (neuer, bewegter Status kommt zurück)
---   falls nein: Pixelposition bleibt gleich
--- gibt ein Tupel aus dem entsprechend der Events veränderten Pixelfeld (aufgerufen mit toFrame dim pixel' level) und dem Status zurück
+--------------------------------------------------------------------------------
+-- bekommt eine Liste von Events (siehe Simple.hs) und einen Status myState
+-- helper wendet alle bekommenen Events nach und nach auf Status an
+--   wenn etwas eingelesen wird, setzt runMateM das Event "KEYBOARD"
+--   Funktion checkt, ob das aktuell ausgelesene Event ein KEYBOARD-Event ist
+--     falls ein c eingelesen wurde, rufe changeColor auf
+--     falls ein ?? ...
+--     ansonsten: rufe move auf
+--   ansonsten: Status bleibt gleich
+-- gibt Tupel aus ListFrame und Status zurück
 
 eventTest :: [Event String] -> MyState -> (ListFrame, MyState)
 eventTest events myState = (toFrame dim (helper events myState), (helper events myState))
-  where 
+  where
   helper [] x = x
-  helper ((Event mod ev):events) myState 
-    | mod == "KEYBOARD" && ev == "\"c\""      = helper events (changeColor myState) 
+  helper ((Event mod ev):events) myState
+    | mod == "KEYBOARD" && ev == "\"c\""      = helper events (changeColor myState)
     | mod == "KEYBOARD" && ev == "\"p\""      = helper events (id myState)
     | mod == "KEYBOARD"                       = helper events (move dim ev myState )
     | otherwise                               = helper events (id myState)
+
 --  blink myState
 --    | curcolcos myState == blinking myState   = myState 
 --    | curcolcos myState == 3                  = myState {curcolcos = blinking myState, blinking = 3}
@@ -70,12 +72,11 @@ eventTest events myState = (toFrame dim (helper events myState), (helper events 
     
 --level = [[(x,y)| y <- [0..11], x <- [0..y]++[29-y..29]],[(x,y)| x <- [8..21], y <- [8..12]],[(x,y)| x <- [22..29], y <- [0..11]]]
 --------------------------------------------------------------------------
-
---------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 -- globale, statische Variablen:
 --
 data MyState = MyState {
-   curpos    :: (Int, Int)  
+   curpos    :: (Int, Int)
   ,curcolcos :: Int
   ,gameplay  :: [((Int,Int),Pixel)]
   ,levels    :: [[((Int,Int),Pixel)]]
@@ -100,4 +101,3 @@ anStatus = MyState (0, 0) 3 [((0,0),colors !! 3)] [level1] 0 3
 
 main :: IO ()
 main = Sock.withSocketsDo $ runMate (Config (fromJust $ parseAddress "134.28.70.172") 1337 dim (Just 500000) False []) eventTest anStatus
-
