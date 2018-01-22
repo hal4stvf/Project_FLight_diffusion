@@ -63,8 +63,12 @@ eventTest events myState = (toFrame dim (helper events myState), (helper events 
     | mod == "KEYBOARD" && ev == "\"p\""      = helper events (id myState)
     | mod == "KEYBOARD"                       = helper events (move dim ev myState )
     | otherwise                               = helper events (id myState)
-
-level = [[(x,y)| y <- [0..11], x <- [0..y]++[29-y..29]],[(x,y)| x <- [8..21], y <- [8..12]],[(x,y)| x <- [22..29], y <- [0..11]]]
+--  blink myState
+--    | curcolcos myState == blinking myState   = myState 
+--    | curcolcos myState == 3                  = myState {curcolcos = blinking myState, blinking = 3}
+--    | otherwise                               = myState {curcolcos = 3, blinking = curcolcos myState}
+    
+--level = [[(x,y)| y <- [0..11], x <- [0..y]++[29-y..29]],[(x,y)| x <- [8..21], y <- [8..12]],[(x,y)| x <- [22..29], y <- [0..11]]]
 --------------------------------------------------------------------------
 
 --------------------------------------------------------------------------
@@ -76,6 +80,7 @@ data MyState = MyState {
   ,gameplay  :: [((Int,Int),Pixel)]
   ,levels    :: [[((Int,Int),Pixel)]]
   ,curlevel  :: Int
+  ,blinking  :: Int
 } deriving (Eq, Ord, Show, Read)
 
 -- Farben
@@ -90,7 +95,7 @@ dim = (30, 12)
 level1 = [((x,y), Pixel 0 0 255) | y <- [0 .. (snd dim) - 1], x <- [0 .. (fst dim) - 1]]
 
 -- Anfangsstatus
-anStatus = MyState (0, 0) 3 [((0,0),colors !! 3)] [level1] 0
+anStatus = MyState (0, 0) 3 [((0,0),colors !! 3)] [level1] 0 3
 --------------------------------------------------------------------------
 
 main :: IO ()
