@@ -23,7 +23,7 @@ data Event a = Event String a deriving (Eq, Ord, Show, Read)
  - The function must take a list of events, a state, and produce a tuple of a frame f and next state s.
  - The purpose of the state is to communicate what should happen in the next frame.
  -}
-runMate :: (Frame f) => Config -> ([Event String] -> (s, Int) -> (f, (s, Int))) -> (s, Int) -> IO ()
+runMate :: (Frame f) => Config -> ([Event String] -> s -> (f, s)) -> s -> IO ()
 runMate conf fkt = runMateM conf $ state . fkt . map stringEvent
 
 {-

@@ -9,11 +9,11 @@ import qualified Network.Socket as Sock
 --
 --
 
-move :: (Int, Int) -> String -> ((Int, Int), Int) -> ((Int, Int), Int)
-move (xdim, ydim) "\"j\"" ((x, y), c) = ((x, (y + 1) `mod` ydim), c)
-move (xdim, ydim) "\"k\"" ((x, y), c) = ((x, (y - 1) `mod` ydim), c)
-move (xdim, ydim) "\"h\"" ((x, y), c) = (((x - 1) `mod` xdim, y), c)
-move (xdim, ydim) "\"l\"" ((x, y), c) = (((x + 1) `mod` xdim, y), c)
+move :: (Int, Int) -> String -> ((Int, Int), Int,[((Int,Int),Int)]) -> ((Int, Int), Int,[((Int,Int),Int)])
+move (xdim, ydim) "\"j\"" ((x, y), c, xs) = ((x, (y + 1) `mod` ydim), c, xs)
+move (xdim, ydim) "\"k\"" ((x, y), c, xs) = ((x, (y - 1) `mod` ydim), c, xs)
+move (xdim, ydim) "\"h\"" ((x, y), c, xs) = (((x - 1) `mod` xdim, y), c, xs)
+move (xdim, ydim) "\"l\"" ((x, y), c, xs) = (((x + 1) `mod` xdim, y), c, xs)
 move _ _ x = x
 
 --------------------------------------------------------------------------
@@ -21,16 +21,16 @@ move _ _ x = x
 -- erhöht den Color-Status um 1, darf nur aufgerufen werden, wenn c gedrückt wurde
 -- output: alle Status (also aktuelles Curser-Pixel und Farbe)
 
-changeColor :: ((Int, Int), Int) -> ((Int, Int), Int)
-changeColor (x,c) = (x, c+1)
+changeColor :: ((Int, Int), Int,[((Int,Int),Int)]) -> ((Int, Int), Int,[((Int,Int),Int)])
+changeColor (x,c,xs) = (x, c+1,xs)
 
 --------------------------------------------------------------------------
 -- aktueller Stand: bekommt dim, Curser-Status und level
 -- färbt Pixel entsprechend der Farbe, den Rest schwarz
 -- gibt ein Pixelfeld zurück (Listframe)
 
-toFrame :: (Int, Int) -> ((Int, Int), Int) -> [[(Int,Int)]] -> ListFrame
-toFrame (xdim, ydim) ((x', y'), col) level
+toFrame :: (Int, Int) -> ((Int, Int), Int,[((Int,Int),Int)]) -> [[(Int,Int)]] -> ListFrame
+toFrame (xdim, ydim) ((x', y'), col,xs) level
  = ListFrame $
   map (\y -> map (\x -> if x == x' && y == y'
     then Pixel ((colors !! (col `mod` 4)) !! 0) ((colors !! (col `mod` 4)) !! 1) ((colors !! (col `mod` 4)) !! 2)
@@ -49,12 +49,12 @@ toFrame (xdim, ydim) ((x', y'), col) level
 --   falls nein: Pixelposition bleibt gleich
 -- gibt ein Tupel aus dem entsprechend der Events veränderten Pixelfeld (aufgerufen mit toFrame dim pixel' level) und dem Status zurück
 
-eventTest :: [Event String] -> ((Int, Int), Int) -> (ListFrame, ((Int, Int), Int))
-eventTest events (pixel, color) = (toFrame dim pixel' level, helper pixel')
+eventTest :: [Event String] -> ((Int, Int), Int,[((Int,Int),Int)]) -> (ListFrame, ((Int, Int), Int,[((Int,Int),Int)]))
+eventTest events (pixel, color,xs) = (toFrame dim pixel' level, pixel')
   where
-    pixel' = foldl (\(acc,c) (Event mod ev) -> if mod == "KEYBOARD" then (if ev == "\"c\"" then changeColor (acc,c) else move dim ev (acc,c)) else (acc,c)) (pixel, color) events
-    level = [[(x,y)| y <- [0..11], x <- [0..y]++[29-y..29]],[(x,y)| x <- [8..21], y <- [8..12]],[(x,y)| x <- [22..29], y <- [0..11]]]
-    helper = id
+    pixel' = foldl (\(acc,c, xs) (Event mod ev) -> if mod == "KEYBOARD" then (if ev == "\"c\"" then changeColor (acc,c,xs) else move dim ev (acc,c,xs)) else (acc,c,xs)) (pixel, color, xs) events
+    
+level = [[(x,y)| y <- [0..11], x <- [0..y]++[29-y..29]],[(x,y)| x <- [8..21], y <- [8..12]],[(x,y)| x <- [22..29], y <- [0..11]]]
 --------------------------------------------------------------------------
 
 --------------------------------------------------------------------------
@@ -71,4 +71,4 @@ dim = (30, 12)
 --------------------------------------------------------------------------
 
 main :: IO ()
-main = Sock.withSocketsDo $ runMate (Config (fromJust $ parseAddress "134.28.70.172") 1337 dim (Just 500000) False []) eventTest ((0, 0), 3)
+main = Sock.withSocketsDo $ runMate (Config (fromJust $ parseAddress "134.28.70.172") 1337 dim (Just 500000) False []) eventTest ((0, 0), 3, [((0,0),3)])
