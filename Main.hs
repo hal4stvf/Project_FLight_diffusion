@@ -5,7 +5,7 @@ import Data.Maybe
 import qualified Network.Socket as Sock
 
 --------------------------------------------------------------------------
---
+-- Tut was move tun sollte.
 --
 --
 move :: (Int, Int) -> String -> MyState -> MyState
@@ -27,6 +27,18 @@ move _ _ x = x
 changeColor :: MyState -> MyState
 changeColor myState = myState {curcolcos = ((curcolcos myState) + 1) `mod` 4}
 
+--------------------------------------------------------------------------------
+-- erste Idee für die Diffusion
+-- Soll doch das Feld in MyState geändert werden?
+-- 
+
+diffusion :: MyState -> MyState
+diffusion myState = myState {levels = [helper x | x <- levels myState ]}
+  where
+    helper x
+      | x == (levels myState !! curlevel myState) = actualldiffusion x
+      | otherwise                         = x 
+    actualldiffusion xs = [ ((x,y), colors !! curcolcos myState) | ((x,y), c) <- xs ]  
 --------------------------------------------------------------------------------
 -- bekommt dim und Status
 -- färbt Cursor entsprechend der Cursor-Farbe
@@ -61,7 +73,7 @@ eventTest events myState = (toFrame dim (helper events myState), (helper events 
   helper [] x = x
   helper ((Event mod ev):events) myState
     | mod == "KEYBOARD" && ev == "\"c\""      = helper events (changeColor myState)
-    | mod == "KEYBOARD" && ev == "\"p\""      = helper events (id myState)
+    | mod == "KEYBOARD" && ev == "\"p\""      = helper events (diffusion myState)
     | mod == "KEYBOARD"                       = helper events (move dim ev myState )
     | otherwise                               = helper events (id myState)
 
