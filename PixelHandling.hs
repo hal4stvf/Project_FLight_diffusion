@@ -1,7 +1,7 @@
 module PixelHandling where
 import Network.MateLight.Simple
 
--- Funktionen, um besser mit Pixeln/Bildern umgehen zu können.
+-- Funktionen, um besser mit Pixeln/Bildern umgehen zu können.BLA
 
 -- plus
 -- Nimmt zwei Pixel und addiert die einzelnen Farbkomponenten miteinander
