@@ -2,6 +2,7 @@ module Main where
 import Network.MateLight.Simple
 import Data.Word
 import Data.Maybe
+import Control.Concurrent
 import qualified Network.Socket as Sock
 
 import PixelHandling
@@ -32,15 +33,16 @@ changeColor myState = myState {curcolcos = ((curcolcos myState) + 1) `mod` 4}
 --------------------------------------------------------------------------------
 -- erste Idee für die Diffusion
 -- Soll doch das Feld in MyState geändert werden?
--- 
+-- Zeitverzögerung in Mikrosekunden: threadDelay 2000000
+--
 
 diffusion :: MyState -> MyState
 diffusion myState = myState {levels = [helper x | x <- levels myState ]}
   where
     helper x
       | x == (levels myState !! curlevel myState) = actualldiffusion x
-      | otherwise                         = x 
-    actualldiffusion xs = [ ((x,y), colors !! curcolcos myState) | ((x,y), c) <- xs ]  
+      | otherwise                         = x
+    actualldiffusion xs = [ ((x,y), colors !! curcolcos myState) | ((x,y), c) <- xs ]
 --------------------------------------------------------------------------------
 -- bekommt dim und Status
 -- färbt Cursor entsprechend der Cursor-Farbe
@@ -80,10 +82,10 @@ eventTest events myState = (toFrame dim (helper events myState), (helper events 
     | otherwise                               = helper events (id myState)
 
 --  blink myState
---    | curcolcos myState == blinking myState   = myState 
+--    | curcolcos myState == blinking myState   = myState
 --    | curcolcos myState == 3                  = myState {curcolcos = blinking myState, blinking = 3}
 --    | otherwise                               = myState {curcolcos = 3, blinking = curcolcos myState}
-    
+
 --level = [[(x,y)| y <- [0..11], x <- [0..y]++[29-y..29]],[(x,y)| x <- [8..21], y <- [8..12]],[(x,y)| x <- [22..29], y <- [0..11]]]
 --------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -100,7 +102,7 @@ data MyState = MyState {
 
 -- Farben
 colors :: [Pixel]
-colors = [red_p, green_p, blue_p, white_p] 
+colors = [red_p, green_p, blue_p, white_p]
 --colors = [Pixel 0xff 0 0, Pixel 0 0xff 0, Pixel 0 0 0xff, Pixel 0xff 0xff 0xff]
 
 -- Feldgröße
@@ -111,13 +113,13 @@ dim = (30, 12)
 -- alles blau
 level1 = [((x,y), Pixel 0 0 255) | y <- [0 .. (snd dim) - 1], x <- [0 .. (fst dim) - 1]]
 --linke Seite grün
-level2 = frame1 ch_left_side green_p 
+level2 = frame1 ch_left_side green_p
 -- linke Seite grün recht Seite rot.
 level3 = frameMix (frame1 ch_left_side green_p) (frame1 ch_right_side red_p)
 -- links oben grün, rechts oben blau, links unten rot, unten rechts gelb.
 level4 = adv_frameMix hlevel4
 
-hlevel4 = [frame1 ch_top_left green_p, frame1 ch_top_right blue_p, 
+hlevel4 = [frame1 ch_top_left green_p, frame1 ch_top_right blue_p,
  frame1 ch_bot_left red_p, frame1 ch_bot_right yellow_p]
 
 
