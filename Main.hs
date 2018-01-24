@@ -2,6 +2,7 @@ module Main where
 import Network.MateLight.Simple
 import Data.Word
 import Data.Maybe
+import Data.List
 import Control.Concurrent
 import qualified Network.Socket as Sock
 
@@ -33,16 +34,42 @@ changeColor myState = myState {curcolcos = ((curcolcos myState) + 1) `mod` 4}
 --------------------------------------------------------------------------------
 -- erste Idee für die Diffusion
 -- Soll doch das Feld in MyState geändert werden?
--- Zeitverzögerung in Mikrosekunden: threadDelay 2000000
 --
 
 diffusion :: MyState -> MyState
 diffusion myState = myState {levels = [helper x | x <- levels myState ]}
   where
     helper x
-      | x == (levels myState !! curlevel myState) = actualldiffusion x
+      | x == (levels myState !! curlevel myState) = actualdiffusion x
       | otherwise                         = x
-    actualldiffusion xs = [ ((x,y), colors !! curcolcos myState) | ((x,y), c) <- xs ]
+    actualdiffusion xs = [ ((x,y), colors !! curcolcos myState) | ((x,y), c) <- xs ]
+
+
+-- lineare ausbreitung, bisher nur sehr mangelhaft, da nicht ringförmig und hässlich
+
+lindiffusion :: MyState -> MyState
+lindiffusion myState = myState {diflist = nub [x | x <- list]}
+  where
+    list
+      | any ((curpos myState,colors !! curcolcos myState)==) (levels myState !! curlevel myState) = snd $ helper (curpos myState, [curpos myState])
+      | otherwise = []
+    helper ((x,y),xs)
+      | any (((x+1,y),colors !! curcolcos myState)==) (levels myState !! curlevel myState) = helper ((x+1,y),xs ++ [(x+1,y)])
+      | any (((x-1,y),colors !! curcolcos myState)==) (levels myState !! curlevel myState) = helper ((x-1,y),xs ++ [(x-1,y)])
+      | any (((x,y+1),colors !! curcolcos myState)==) (levels myState !! curlevel myState) = helper ((x,y+1),xs ++ [(x,y+1)])
+      | any (((x,y-1),colors !! curcolcos myState)==) (levels myState !! curlevel myState) = helper ((x,y-1),xs ++ [(x,y-1)])
+      | otherwise = (curpos myState, [curpos myState])
+
+-- brauchen wir vllt noch
+neighbours :: (Int, Int) -> [(Int,Int)]
+neighbours (x,y) = [(x+1,y),(x-1,y),(x,y+1),(x,y-1)]
+
+-- delay-fkt. müssen wir schauen, wie wir das dann mit dem aufruf hinbekommen
+-- evtl mit Monaden neu schreiben (ähnlich wie ind MateLight.hs ?)
+delay :: Int -> IO ()
+delay delay = threadDelay delay
+
+
 --------------------------------------------------------------------------------
 -- bekommt dim und Status
 -- färbt Cursor entsprechend der Cursor-Farbe
@@ -98,6 +125,7 @@ data MyState = MyState {
   ,levels    :: [[((Int,Int),Pixel)]]
   ,curlevel  :: Int
   ,blinking  :: Int
+  ,diflist   :: [(Int, Int)]
 } deriving (Eq, Ord, Show, Read)
 
 -- Farben
@@ -124,7 +152,7 @@ hlevel4 = [frame1 ch_top_left green_p, frame1 ch_top_right blue_p,
 
 
 -- Anfangsstatus
-anStatus = MyState (0, 0) 3 [((0,0),colors !! 3)] [level4] 0 3
+anStatus = MyState (0, 0) 3 [((0,0),colors !! 3)] [level4] 0 3 []
 --------------------------------------------------------------------------
 
 main :: IO ()
