@@ -48,24 +48,41 @@ diffusion myState = myState {levels = [helper x | x <- levels myState ]}
     actualdiffusion xs = [ ((x,y), colors !! curcolcos myState) | ((x,y), c) <- xs ]
 
 
--- lineare ausbreitung, bisher nur sehr mangelhaft, da nicht ringförmig und hässlich
+-- lineare ausbreitung, bisher nur sehr mangelhaft, da nicht ringförmig und nicht funktionsfähig
 
-lindiffusion :: MyState -> MyState
+{-lindiffusion :: MyState -> MyState
 lindiffusion myState = myState {diflist = nub [x | x <- list]}
   where
     list
-      | any ((curpos myState,colors !! curcolcos myState)==) (levels myState !! curlevel myState) = snd $ helper (curpos myState, [curpos myState])
+      | elem (curpos myState,colors !! curcolcos myState) (levels myState !! curlevel myState) = snd $ snd $ helper ((curpos myState,colors !! curcolcos myState), [curpos myState])
       | otherwise = []
-    helper ((x,y),xs)
-      | any (((x+1,y),colors !! curcolcos myState)==) (levels myState !! curlevel myState) = helper ((x+1,y),xs ++ [(x+1,y)])
-      | any (((x-1,y),colors !! curcolcos myState)==) (levels myState !! curlevel myState) = helper ((x-1,y),xs ++ [(x-1,y)])
-      | any (((x,y+1),colors !! curcolcos myState)==) (levels myState !! curlevel myState) = helper ((x,y+1),xs ++ [(x,y+1)])
-      | any (((x,y-1),colors !! curcolcos myState)==) (levels myState !! curlevel myState) = helper ((x,y-1),xs ++ [(x,y-1)])
-      | otherwise = (curpos myState, [curpos myState])
-
--- brauchen wir vllt noch
-neighbours :: (Int, Int) -> [(Int,Int)]
-neighbours (x,y) = [(x+1,y),(x-1,y),(x,y+1),(x,y-1)]
+    helper (((x,y),c),xs)
+      | elem ((x+1,y),c) (levels myState !! curlevel myState) = helperu (((x,y+1),c),xs ++ [(x+1,y)])
+      | elem ((x,y+1),c) (levels myState !! curlevel myState) = helperl (((x-1,y),c),xs ++ [(x,y+1)])
+      | elem ((x-1,y),c) (levels myState !! curlevel myState) = helpero (((x,y-1),c),xs ++ [(x-1,y)])
+      | elem ((x,y-1),c) (levels myState !! curlevel myState) = helper (((x,y-1),c),xs ++ [(x,y-1)])
+      | otherwise = (((x,y),c),xs)
+    helperu (((x,y),c),xs)
+      | elem ((x,y),c) (levels myState !! curlevel myState) = helperl (((x-1,y-1),c),xs ++ [(x,y)])
+      | otherwise helperl (((x-1,y-1),c),xs)
+    helperl (((x,y),c),xs)
+      | elem ((x,y),c) (levels myState !! curlevel myState) = helpero (((x+1,y-1),c),xs ++ [(x,y)])
+      | otherwise helperl (((x+1,y-1),c),xs)
+    helpero (((x,y),c),xs)
+      | elem ((x,y),c) (levels myState !! curlevel myState) = helper (((x+1,y),c),xs ++ [(x,y)])
+      | otherwise helper (((x+1,y),c),xs)
+-}
+    --  | elem (curpos myState,colors !! curcolcos myState) (levels myState !! curlevel myState) = helper (((curpos myState),curcolcos myState),[curpos myState])
+    --  | otherwise []
+    --helper (((x,y),c),xs)
+    --  | snd (neighbours((x,y)c)!!0) == c = helper (((x+1,y),c),xs ++ [(x',y')| ((x',y'),c') <- neighbours((x,y),c), c'==c ])
+    --  | snd (neighbours((x,y)c)!!1) == c = helper (((x+1,y),c),xs ++ [(x',y')| ((x',y'),c') <- neighbours((x,y),c), c'==c ])
+    --  | snd (neighbours((x,y)c)!!2) == c = helper (((x+1,y),c),xs ++ [(x',y')| ((x',y'),c') <- neighbours((x,y),c), c'==c ])
+    --  | snd (neighbours((x,y)c)!!3) == c = helper (((x+1,y),c),xs ++ [(x',y')| ((x',y'),c') <- neighbours((x,y),c), c'==c ])
+    --neighbours ((x,y),c) = [(levels myState !! curlevel myState)!!(x*y+1),
+    --                        (levels myState !! curlevel myState)!!(x*y+30),
+    --                        (levels myState !! curlevel myState)!!(x*y-1),
+    --                        (levels myState !! curlevel myState)!!(x*y-30)]
 
 -- delay-fkt. müssen wir schauen, wie wir das dann mit dem aufruf hinbekommen
 -- evtl mit Monaden neu schreiben (ähnlich wie ind MateLight.hs ?)
@@ -79,6 +96,9 @@ delay delay = threadDelay delay
 -- rest bleibt momentan noch gleich
 -- gibt ein Pixelfeld zurück (Listframe)
 
+-- diflist müsste nach jeder fertigen Diffusion wieder gelöscht werden!
+-- läuft jetzt nat noch nicht in der gewünschten Reihenfolge
+
 toFrame :: (Int, Int) -> MyState -> ListFrame
 toFrame (xdim, ydim) myState
  = ListFrame $ con2frame (topicture (levels myState !! curlevel myState))
@@ -86,6 +106,7 @@ toFrame (xdim, ydim) myState
     topicture [] = []
     topicture (((x,y), pixelcol): xs)
       | curpos myState == (x,y)    = ((x,y),colors !! curcolcos myState) : (topicture xs)
+      | elem (x,y) diflist myState = ((x,y),colors !! curcolcos myState) : (topicture xs)
       | otherwise                   = ((x,y), pixelcol) : (topicture xs)
     con2frame [] = []
     con2frame xs = [[ c | ((x,y), c) <- (take (xdim -1) xs) ]] ++ con2frame (drop (xdim -1) xs)
