@@ -37,10 +37,10 @@ changeColor myState = myState {curcolcos = ((curcolcos myState) + 1) `mod` 4}
 --
 
 diffusion :: MyState -> MyState
-diffusion myState = myState {levels = [helper x | x <- levels myState ]}
+diffusion myState = myState {curlevelstatus = [helper x | x <- curlevelstatus myState ]}
   where
     helper x
-      | x == (levels myState !! curlevel myState) = actualldiffusion x
+      | x == (curlevelstatus myState !! curlevel myState) = actualldiffusion x
       | otherwise                         = x
     actualldiffusion xs = [ ((x,y), colors !! curcolcos myState) | ((x,y), c) <- xs ]
 --------------------------------------------------------------------------------
@@ -95,6 +95,7 @@ data MyState = MyState {
    curpos    :: (Int, Int)
   ,curcolcos :: Int
   ,gameplay  :: [((Int,Int),Pixel)]
+  ,curlevelstatus :: [((Int,Int), Pixel)]
   ,levels    :: [[((Int,Int),Pixel)]]
   ,curlevel  :: Int
   ,blinking  :: Int
@@ -124,7 +125,7 @@ hlevel4 = [frame1 ch_top_left green_p, frame1 ch_top_right blue_p,
 
 
 -- Anfangsstatus
-anStatus = MyState (0, 0) 3 [((0,0),colors !! 3)] [level4] 0 3
+anStatus = MyState (0, 0) 3 [((0,0),colors !! 3)] level4 [level4] 0 3
 --------------------------------------------------------------------------
 
 main :: IO ()
