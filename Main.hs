@@ -32,17 +32,56 @@ changeColor myState = myState {curcolcos = ((curcolcos myState) + 1) `mod` 4}
 
 --------------------------------------------------------------------------------
 -- erste Idee für die Diffusion
--- Soll doch das Feld in MyState geändert werden?
--- Zeitverzögerung in Mikrosekunden: threadDelay 2000000
 --
 
 diffusion :: MyState -> MyState
-diffusion myState = myState {curlevelstatus = [helper x | x <- curlevelstatus myState ]}
+diffusion myState = myState {curlevelstatus = actualldiffusion $ curlevelstatus myState}
   where
-    helper x
-      | x == (curlevelstatus myState !! curlevel myState) = actualldiffusion x
-      | otherwise                         = x
     actualldiffusion xs = [ ((x,y), colors !! curcolcos myState) | ((x,y), c) <- xs ]
+
+diffQ :: [(Int,Int)]
+diffQ = [(-1,0),(0,-1),(1,0),(0,1)]    
+
+diffR :: [(Int,Int)]
+diffR = drop 4 $ diffMatrix1 diffQ
+
+mat :: [(Int,Int)]
+mat = diffQ ++ diffR
+
+diffofpoint ::  [(Int,Int)] -> (Int, Int) -> [(Int,Int)]
+diffofpoint = 
+  (\ ys x -> [x $+ y | y <- ys, not $ any ((x $+ y) ==) ((0,0):ys++mat), sct (x $+ y) ]) 
+ where
+  ($+) (x1,y1) (x2,y2) = (x1+x2,y1+y2)
+  sct :: (Int, Int) -> Bool
+  sct (x,y) | abs (2*x) > fst dim || abs (2*y) > snd dim    = False
+            | otherwise                     = True
+
+diffMat ms = makeuniq (mat ++ foldr (++) [] (mapQ ms ++ mapR ms))
+  where
+    mapQ = map (diffofpoint diffQ) 
+    mapR = map (diffofpoint diffR) 
+    makeuniq [] = []
+    makeuniq (x:xs) 
+      | sum [if x==y then 1 else 0 | y <-xs] /= 0  = x : makeuniq [z | z <-xs, x /= z]
+      | otherwise                                  = x : makeuniq xs 
+
+diffMatRek ms = iterate diffMat ms !! 15 
+
+---- Fehlerhafte zu manueller Versuch
+diffMatrix1 xs = xs ++ helper (xs ++ take 1 xs)  
+  where
+  helper xs | length xs < 2 = [] 
+  helper xs = add2ListDup xs : (helper $ tail xs)
+  add2ListDup ys = (\ ((x1,y1):(x2,y2):xs) -> (x1+x2,y1+y2)) ys
+diffMatrix2 xs = [(x+x,y+y) | (x,y) <- xs]
+diffMatrix3 xs = (take 4 xs) +++  (drop 4 xs)  
+
+diffMatrix xs = diffMatrix1 xs ++ diffMatrix2 xs
+
+(+++) _ [] = []
+(+++) [] _ = []
+(+++) xs ys = (\ ((x1,y1):qs) ((x2,y2):ws) -> (x1+x2,y1+y2): (qs +++ ws)) xs ys   
 --------------------------------------------------------------------------------
 -- bekommt dim und Status
 -- färbt Cursor entsprechend der Cursor-Farbe
