@@ -101,15 +101,16 @@ delay delay = threadDelay delay
 
 toFrame :: (Int, Int) -> MyState -> ListFrame
 toFrame (xdim, ydim) myState
- = ListFrame $ con2frame (topicture (levels myState !! curlevel myState))
+ = ListFrame $ con2frame $ topicture $ levels myState !! curlevel myState
   where
     topicture [] = []
     topicture (((x,y), pixelcol): xs)
       | curpos myState == (x,y)    = ((x,y),colors !! curcolcos myState) : (topicture xs)
-      | elem (x,y) diflist myState = ((x,y),colors !! curcolcos myState) : (topicture xs)
+      | elem (x,y) $ diflist myState = ((x,y),colors !! curcolcos myState) : (topicture xs)
       | otherwise                   = ((x,y), pixelcol) : (topicture xs)
     con2frame [] = []
     con2frame xs = [[ c | ((x,y), c) <- (take (xdim -1) xs) ]] ++ con2frame (drop (xdim -1) xs)
+--currentLevel =  levels myState !! curlevel myState -- Um Laufzeit zu sparen
 
 --------------------------------------------------------------------------------
 -- bekommt eine Liste von Events (siehe Simple.hs) und einen Status myState
