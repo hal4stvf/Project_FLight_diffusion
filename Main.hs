@@ -130,7 +130,7 @@ eventTest events myState = (toFrame dim (helper events myState), (helper events 
 -- [Purpose]
 ---------------------------------------------------
 main :: IO ()
-main = Sock.withSocketsDo $ runMate (Config (fromJust $ parseAddress "127.0.0.1") 1337 dim (Just 5000000) False []) eventTest anStatus
+main = Sock.withSocketsDo $ runMate (Config (fromJust $ parseAddress "127.0.0.1") 1337 dim (Just 900000) False []) eventTest anStatus
 
 ------------------------------
 -- Another Version.					 |
