@@ -3,10 +3,6 @@ module PixelHandling where
 
 import Network.MateLight.Simple
  
---Beispielbild 
-ex_fr :: [( (Int,Int) , Pixel) ]
-ex_fr = (take 2  $ frame1 ch_left_side green_p) ++ (drop 358 $ frame1 ch_left_side green_p)
-
 -- Schwarzes Bild
 black_pic :: [ ( (Int,Int) , Pixel) ]
 black_pic = [ ((x,y), black_p) | y <- [0 .. ydim - 1] , x <- [0 .. xdim - 1] ]
@@ -141,7 +137,7 @@ setColumn xs c h (x,y) = helper (y + h)
  where 
  helper k | k <= (y-h)  = setP xs (x,y-h) c
           | otherwise   = setP ( helper (k-1) ) (x,k) c
-
+--
 
 --alternativer Code für setColumn. TODO ausprobieren
 setColumn2 :: [ ( (Int, Int) , Pixel )  ] -> Pixel -> Int -> (Int,Int) -> [ ( (Int, Int) , Pixel) ]
@@ -162,7 +158,6 @@ setRectangle_nadv xs c h w (x,y) = helper (x + w)
           | k > x     = sethColumn ( helper (k-1) ) c h (k,x)
           | k < x     = sethColumn ( helper (k+1) ) c h (k,x)
 --
-
 -- Erstellt ein Rechteck
 -- Erhält zwei (x,y)-Koordinaten und versucht ein Rechteck dazwischen zu zeichnen, sowie auszufüllen.
 setRectangle :: [ ( (Int,Int) , Pixel) ] -> Pixel -> (Int,Int) -> (Int,Int) -> [ ( (Int,Int) , Pixel ) ]

@@ -54,6 +54,9 @@ level13 = setRectangle_nadv black_pic red_p 3 1 (5,5)
 -- Eine blaue Kolumne mit (5,8) als Start und Höhe -3
 level14 = setRectangle_nadv black_pic red_p (-3) (1) (5,8)
 
+level_list = [level1, level2, level3, level4, level5, level6, level7, level8, level9, level10, level11, level12, level13, level14]
+
+
 {-
 getDivByAny :: [Int] -> [Int] -> [Int]
 getDivByAny xs ys = filter helper xs
