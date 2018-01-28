@@ -95,24 +95,9 @@ ch_top_right x y c | x >= div xdim 2 && y <= div ydim 2 = c
 ch_bot_right :: Int -> Int -> Pixel -> Pixel
 ch_bot_right x y c | x >= div xdim 2 && y >= div ydim 2 = c 
                    | otherwise                          = black_p
-
-
-ch_column :: Int -> Int -> (Int,Int) -> Int -> Pixel -> Pixel
-ch_column x y (x',y') h c | x == x' && y <= y' + h && y >= y' - h = c 
-                          | otherwise                             = black_p
---
-
-ch_quader :: Int -> Int -> (Int, Int) -> Int -> Int -> Pixel -> Pixel
-ch_quader x y (x',y') h w c
- | x <= x' + w && x >= x' + w && y <= y' + h && y >= y' - h = c
- | otherwise                                                = black_p
  
 ------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------
-
--- Funktionen, um gewisse Strukturen in das Bild zu malen.
--- Je weiter nach unten, desto mehr Struktur
-
 -- Setzt einen Pixel auf die gewünschte Farbe in das Feld
 -- Bekommt das Bild, die Farbe und die gewünschte Koordinate
 -- FRAGE: Geht das effizienter insofern, dass nicht das gesamte Bild durchgegangen werden muss? 
@@ -127,7 +112,7 @@ sethColumn xs c h (x,y) = helper (y+h)
  helper k | k == y    = setP xs (x,y) c
           | k > y     = setP ( helper (k-1) ) (x,k) c 
           | k < y     = setP ( helper (k+1) ) (x,k) c
---          | otherwise = setP xs (x,y) c
+          | otherwise = setP xs (x,y) c
  
 -- Färbt eine Spalte ein.
 -- Bekommt das Bild, eine Farbe, die Höhe der (halben) Spalte, den Mittelpunkt 
@@ -139,7 +124,8 @@ setColumn xs c h (x,y) = helper (y + h)
           | otherwise   = setP ( helper (k-1) ) (x,k) c
 --
 
---alternativer Code für setColumn. TODO ausprobieren
+{-
+-- alternativer Code für setColumn.
 setColumn2 :: [ ( (Int, Int) , Pixel )  ] -> Pixel -> Int -> (Int,Int) -> [ ( (Int, Int) , Pixel) ]
 setColumn2 xs c h (x,y) = helper (y + h)
  where 
@@ -147,6 +133,7 @@ setColumn2 xs c h (x,y) = helper (y + h)
           | otherwise = setP ( helper (k-1) ) (x,k) c
  helper2 i | i <= (y-h) = setP xs (x,y-h) c
            | otherwise  = setP ( helper2 (i-1) ) (x,i) c
+-}
 
 -- Erstellt ein Rechteck
 -- Bekommt ein Bild, eine Farbe, eine Höhe, eine Breite und den (x,y) - Punkt unten links.
@@ -155,17 +142,13 @@ setRectangle_nadv :: [ ( (Int,Int) , Pixel) ] -> Pixel -> Int -> Int -> (Int,Int
 setRectangle_nadv xs c h w (x,y) = helper (x + w)
  where 
  helper k | k == x    = sethColumn xs c h (x, y)
-          | k > x     = sethColumn ( helper (k-1) ) c h (k,x)
-          | k < x     = sethColumn ( helper (k+1) ) c h (k,x)
+          | k > x     = sethColumn ( helper (k-1) ) c h (x, k)
+          | k < x     = sethColumn ( helper (k+1) ) c h (x, k)
 --
 -- Erstellt ein Rechteck
 -- Erhält zwei (x,y)-Koordinaten und versucht ein Rechteck dazwischen zu zeichnen, sowie auszufüllen.
 setRectangle :: [ ( (Int,Int) , Pixel) ] -> Pixel -> (Int,Int) -> (Int,Int) -> [ ( (Int,Int) , Pixel ) ]
 setRectangle xs c (x1,y1) (x2,y2) = setRectangle_nadv xs c (y2-y1) (x2-x1) (x1,y1)
-
-
---vergleiche :: [ ( (Int,Int) , Pixel) ]
--- vergleiche xs ys = undefined
 
 {-
 -- So wie oben. Nur bekommt es den Mittelpunkt und nicht den Punkt unten links
@@ -177,118 +160,7 @@ setRectangle2 xs c h w (x,y) = helper (x + w)
  helper k | k <= (x-w) = setColumn xs c h ( (x-w) , y)
           | otherwise  = setColumn ( helper (k-1) ) c h (k,x)
 -}
- 
--- Erstellt ein rechtwinkliges Dreieck
--- Bekommt ein Bild, eine Farbe, die Höhe, die Breite und den Punkt, an dem sich der rechte Winkel aufhalten soll.
--- Die Höhe wird von der gegebenen Koordinate gegangen. So auch die Breite
--- Höhe geht nach oben, Breite nach rechts.
--- Für ein Dreieck, mit einer Spitze links setzt man eine negative Breite ein.
--- Analog die Höhe negativ bei gewünschter Spitze nach unten.
-setrTriangle :: [ ( (Int, Int) , Pixel ) ] -> Pixel -> Int -> Int -> (Int,Int) -> [ ( (Int,Int) ,Pixel ) ]
-setrTriangle xs c h w (x,y) = helper (x + w) h
- where
- helper k h' | h' == y = undefined
-             | otherwise = undefined
---
 
-
-
-
-
-
-
-
-{-
-map f xs = [ f x | x <- xs]
-    f xs = 
-	for y aus [y-h bis y+h]
-	wende setP an. <- schlecht
-	wende auf das Bild setP an.
-	
-	
-
-quader :: [ ( (Int,Int) , Pixel ) ] -> (Int, Int) -> Int -> Int ->[ ( (Int,Int) , Pixel ) ]
-quader xs (x,y) 0 wide = xs 
-quader xs (x,y) height 0 = setColumn (x,y) height 0
-quader xs (x,y) height wide = 
--- quader xs (x,y) height wide = setColumn (x,y) height wide
--}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-{-
--- Wird nicht gebraucht 
--- plus
--- Nimmt zwei Pixel und addiert di:rae einzelnen Farbkomponenten miteinander
--- Problem ist z.b 255 + 255 = 254
-plus_p :: Pixel -> Pixel -> Pixel
-plus_p (Pixel ra ga ba) (Pixel rb gb bb) = Pixel (ra + rb) (ga + gb) (ba + bb)
-
-
--- max_p nimmt zwei Pixel und erstellt einen neuen Pixel, 
--- wobei komponentenweise die größere Zahl genommen wird.
-max_p :: Pixel -> Pixel -> Pixel 
-max_p (Pixel ra ga ba) (Pixel rb gb bb) = Pixel (max ra rb) (max ga gb) (max ba bb)
--}
-
-
-
-
-
-
-
-{-
-
-
--- Erstellt ein blaues rechtwinkliges Dreieck, dessen rechter Winkel links ist.
--- Benötigt eine Startkoordinate, eine Höhe, und Breite.
--- Wobei der Ausgabewert noch nicht eine Listframe ist (und auch nicht funktioniert).
-dreieck :: (Int, Int) -> (Int, Int) -> Int -> Int -> [[Pixel]]
-dreieck (xdim, ydim) (xStart, yStart) height wide 
- = map (\x -> map (\y -> if elem y [yStart .. min (f x) (ydim - 1)] then blue_p else white_p) [0 .. ydim -1]) [0 .. xdim -1]
- where f x = round $ (toRational height) / (toRational wide) * toRational ( -x + height + yStart + xStart)
--}
-
-{-
-funcMix :: (Int -> Int -> Pixel -> Pixel) -> (Int -> Int -> Pixel -> Pixel) -> (Int -> Int -> Pixel -> Pixel)
-
--- funcMix kann mit 2 charakteristischen Funktionen umgehen, und gibt eine Funktion 
--- zurück, die eine gewisse Kombination der beiden Funktionen ist.
--- Dabei wird überprüft, ob die zweite Funktion bei einem Pixel bereits eine Farbe hat (!= schwarz)
--- Wenn nicht, wird die Farbe der ersten Funktion eingesetzt.
--- Ziel soll sein, dass das zweite Bild über dem ersten liegt.
-
-funcMix f g x y c | g x y c /= black_p = g x y c
-                  | otherwise          = f x y c
--}
-
+-- Eine sehr nützliche Funktionenzeigerliste
+ldfksdlkfj = [\x -> 1, \x -> x+1]
 
