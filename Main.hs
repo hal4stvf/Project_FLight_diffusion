@@ -10,11 +10,14 @@ import qualified Network.Socket as Sock
 -- Eigene Imports
 import PixelHandling
 import Level
+import Diffusion
+import Daten
 
---------------------------------------------------------------------------
+{------------------------------------------------------------------------------}
+--------------------------------------------------
+-- [Purpose]
 -- Tut was move tun sollte.
---
---
+--------------------------------------------------
 move :: (Int, Int) -> String -> MyState -> MyState
 move (xdim, ydim) "\"j\"" myState
   = myState {curpos = (\ (x,y) -> (x, (y + 1) `mod` ydim)) (curpos myState)}
@@ -25,27 +28,49 @@ move (xdim, ydim) "\"h\"" myState
 move (xdim, ydim) "\"l\"" myState
   = myState {curpos = (\ (x,y) -> ((x + 1) `mod` xdim, y)) (curpos myState)}
 move _ _ x = x
+--------------------------------------------------
+--------------------------------------------------------------------------
 
---------------------------------------------------------------------------------
+{------------------------------------------------------------------------------}
+-- [Purpose]
+---------------------------------------------------
 -- input: alle Status
 -- erhöht den Color-Status um 1; Aufruf, wenn c gedrückt wurde
 -- output: alle Status (also aktuelles Curser-Pixel und Farbe)
+---------------------------------------------------
 
 changeColor :: MyState -> MyState
 changeColor myState = myState {curcolcos = ((curcolcos myState) + 1) `mod` 4}
 
+---------------------------------------------------
 --------------------------------------------------------------------------------
 -- erste Idee für die Diffusion
 -- Soll doch das Feld in MyState geändert werden?
---
 
-diffusion :: MyState -> MyState
-diffusion myState = myState {levels = [helper x | x <- levels myState ]}
-  where
-    helper x
-      | x == (levels myState !! curlevel myState) = actualdiffusion x
-      | otherwise                         = x
-    actualdiffusion xs = [ ((x,y), colors !! curcolcos myState) | ((x,y), c) <- xs ]
+
+{------------------------------------------------------------------------------}
+-- [Purpose]
+---------------------------------------------------
+
+------------------------------
+-- Another Version.					 |
+-- Remove in working version |
+------------------------------
+
+--  blink myState
+--    | curcolcos myState == blinking myState   = myState
+--    | curcolcos myState == 3                  = myState {curcolcos = blinking myState, blinking = 3}
+--    | otherwise                               = myState {curcolcos = 3, blinking = curcolcos myState}
+--
+--------------------------------------------------
+
+--diffusion :: MyState -> MyState
+--diffusion myState = myState {levels = [helper x | x <- levels myState ]}
+--  where
+--    helper x
+--      | x == (levels myState !! curlevel myState) = actualdiffusion x
+--      | otherwise                         = x
+--    actualdiffusion xs = [ ((x,y), colors !! curcolcos myState) | ((x,y), c) <- xs ]
 
 
 -- lineare ausbreitung, bisher nur sehr mangelhaft, da nicht ringförmig und nicht funktionsfähig
@@ -89,12 +114,19 @@ lindiffusion myState = myState {diflist = nub [x | x <- list]}
 delay :: Int -> IO ()
 delay delay = threadDelay delay
 
-
+---------------------------------------------------
 --------------------------------------------------------------------------------
+
+{------------------------------------------------------------------------------}
+-- |||| toFrame ||||
+---------------------------------------------------
+-- [Purpose]
+---------------------------------------------------
 -- bekommt dim und Status
 -- färbt Cursor entsprechend der Cursor-Farbe
 -- rest bleibt momentan noch gleich
 -- gibt ein Pixelfeld zurück (Listframe)
+---------------------------------------------------
 
 -- diflist müsste nach jeder fertigen Diffusion wieder gelöscht werden!
 -- läuft jetzt nat noch nicht in der gewünschten Reihenfolge
@@ -106,13 +138,18 @@ toFrame (xdim, ydim) myState
     topicture [] = []
     topicture (((x,y), pixelcol): xs)
       | curpos myState == (x,y)    = ((x,y),colors !! curcolcos myState) : (topicture xs)
-      | elem (x,y) $ diflist myState = ((x,y),colors !! curcolcos myState) : (topicture xs)
+--      | elem (x,y) $ dflist myState = ((x,y),colors !! curcolcos myState) : (topicture xs)
       | otherwise                   = ((x,y), pixelcol) : (topicture xs)
     con2frame [] = []
     con2frame xs = [[ c | ((x,y), c) <- (take (xdim -1) xs) ]] ++ con2frame (drop (xdim -1) xs)
 --currentLevel =  levels myState !! curlevel myState -- Um Laufzeit zu sparen
 
+---------------------------------------------------
 --------------------------------------------------------------------------------
+
+{------------------------------------------------------------------------------}
+-- [Purpose]
+---------------------------------------------------
 -- bekommt eine Liste von Events (siehe Simple.hs) und einen Status myState
 -- helper wendet alle bekommenen Events nach und nach auf Status an
 --   wenn etwas eingelesen wird, setzt runMateM das Event "KEYBOARD"
@@ -122,11 +159,23 @@ toFrame (xdim, ydim) myState
 --     ansonsten: rufe move auf
 --   ansonsten: Status bleibt gleich
 -- gibt Tupel aus ListFrame und Status zurück
+---------------------------------------------------
+
+------------------------------
+-- Another Version.					 |
+-- Remove in working version |
+------------------------------
+
+--eventTest :: [Int] -> [Event String] -> MyState -> (ListFrame, MyState)
+--eventTest ints events myState = (toFrame dim (helper ints events myState), (helper ints events myState))
+--
+--------------------------------------------------
 
 eventTest :: [Event String] -> MyState -> (ListFrame, MyState)
 eventTest events myState = (toFrame dim (helper events myState), (helper events myState))
   where
-  helper [] x = x
+  helper [] x | null $ diffusionstatus myState  = x
+              | otherwise                       = oneStepDiffusion x  
   helper ((Event mod ev):events) myState
     | mod == "KEYBOARD" && ev == "\"c\""      = helper events (changeColor myState)
     | mod == "KEYBOARD" && ev == "\"p\""      = helper events (diffusion myState)
@@ -146,15 +195,15 @@ switchlevel x = x {curlevel = (curlevel x + 1) `mod` length (levels x)  }
 --------------------------------------------------------------------------------
 -- globale, statische Variablen:
 --
-data MyState = MyState {
-   curpos    :: (Int, Int)
-  ,curcolcos :: Int
-  ,gameplay  :: [((Int,Int),Pixel)]
-  ,levels    :: [[((Int,Int),Pixel)]]
-  ,curlevel  :: Int
-  ,blinking  :: Int
-  ,diflist   :: [(Int, Int)]
-} deriving (Eq, Ord, Show, Read)
+--data MyState = MyState {
+--   curpos    :: (Int, Int)
+--  ,curcolcos :: Int
+--  ,gameplay  :: [((Int,Int),Pixel)]
+--  ,levels    :: [[((Int,Int),Pixel)]]
+--  ,curlevel  :: Int
+--  ,blinking  :: Int
+--  ,diflist   :: [(Int, Int)]
+--} deriving (Eq, Ord, Show, Read)
 
 
 -- Feldgröße
@@ -164,7 +213,7 @@ dim = (30, 12)
 -}
 
 -- Anfangsstatus
-anStatus = MyState (0, 0) 3 [((0,0),colors !! 3)] level_list 0 3 []
+anStatus = MyState (0, 0) 3 [] [] level_list 0 3
 --------------------------------------------------------------------------
 --
 --
