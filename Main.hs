@@ -134,7 +134,7 @@ eventTest events myState = (toFrame dim (helper events myState), (helper events 
     | mod == "KEYBOARD"                       = helper events (move dim ev myState )
     | otherwise                               = helper events (id myState)
 
-switchlevel x = x {curlevel = (curlevel x + 1) `mod` length levels x)  
+switchlevel x = x {curlevel = (curlevel x + 1) `mod` length (levels x)  }
 
 --  blink myState
 --    | curcolcos myState == blinking myState   = myState
@@ -164,7 +164,7 @@ dim = (30, 12)
 -}
 
 -- Anfangsstatus
-anStatus = MyState (0, 0) 3 [((0,0),colors !! 3)] [level_list] 0 3 []
+anStatus = MyState (0, 0) 3 [((0,0),colors !! 3)] level_list 0 3 []
 --------------------------------------------------------------------------
 --
 --
