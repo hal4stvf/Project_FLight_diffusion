@@ -20,6 +20,11 @@ xdim = fst dim
 ydim = snd dim
 
 
+f :: Eq a => [[ a ]] -> [ a ] -> [[ a ]]
+-- f xss ys = map ( filter ( \xs -> (`elem` xs) ) ys) xss
+--f xss ys         = [ filter ( `elem` ys ) xs | xs <- xss ]
+f xss ys = map (filter ( `elem` ys) ) xss
+
 ------------------------------------------------------------------------------------------
  
 -- Pixelfarben
@@ -142,8 +147,8 @@ setRectangle_nadv :: [ ( (Int,Int) , Pixel) ] -> Pixel -> Int -> Int -> (Int,Int
 setRectangle_nadv xs c h w (x,y) = helper (x + w)
  where 
  helper k | k == x    = sethColumn xs c h (x, y)
-          | k > x     = sethColumn ( helper (k-1) ) c h (x, k)
-          | k < x     = sethColumn ( helper (k+1) ) c h (x, k)
+          | k > x     = sethColumn ( helper (k-1) ) c h (k, y)
+          | k < x     = sethColumn ( helper (k+1) ) c h (k, y)
 --
 -- Erstellt ein Rechteck
 -- Erhält zwei (x,y)-Koordinaten und versucht ein Rechteck dazwischen zu zeichnen, sowie auszufüllen.
