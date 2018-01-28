@@ -19,12 +19,12 @@ xdim, ydim :: Int
 xdim = fst dim
 ydim = snd dim
 
-
+{-
 f :: Eq a => [[ a ]] -> [ a ] -> [[ a ]]
 -- f xss ys = map ( filter ( \xs -> (`elem` xs) ) ys) xss
 --f xss ys         = [ filter ( `elem` ys ) xs | xs <- xss ]
 f xss ys = map (filter ( `elem` ys) ) xss
-
+-}
 ------------------------------------------------------------------------------------------
  
 -- Pixelfarben
