@@ -130,8 +130,11 @@ eventTest events myState = (toFrame dim (helper events myState), (helper events 
   helper ((Event mod ev):events) myState
     | mod == "KEYBOARD" && ev == "\"c\""      = helper events (changeColor myState)
     | mod == "KEYBOARD" && ev == "\"p\""      = helper events (diffusion myState)
+    | mod == "KEYBOARD" && ev == "\"w\""      = helper events (switchlevel myState)
     | mod == "KEYBOARD"                       = helper events (move dim ev myState )
     | otherwise                               = helper events (id myState)
+
+switchlevel x = x {curlevel = (curlevel x + 1) `mod` length levels x)  
 
 --  blink myState
 --    | curcolcos myState == blinking myState   = myState
@@ -161,8 +164,10 @@ dim = (30, 12)
 -}
 
 -- Anfangsstatus
-anStatus = MyState (0, 0) 3 [((0,0),colors !! 3)] [level4] 0 3 []
+anStatus = MyState (0, 0) 3 [((0,0),colors !! 3)] [level_list] 0 3 []
 --------------------------------------------------------------------------
-
+--
+--
+ipAdress = ["127.0.0.1","134.28.70.172"]
 main :: IO ()
-main = Sock.withSocketsDo $ runMate (Config (fromJust $ parseAddress "134.28.70.172") 1337 dim (Just 500000) False []) eventTest anStatus
+main = Sock.withSocketsDo $ runMate (Config (fromJust $ parseAddress $ ipAdress !! 0) 1337 dim (Just 500000) False []) eventTest anStatus
