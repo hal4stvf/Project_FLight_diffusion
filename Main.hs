@@ -178,7 +178,10 @@ eventTest events myState = (toFrame dim (helper events myState), (helper events 
               | otherwise                       = oneStepDiffusion x  
   helper ((Event mod ev):events) myState
     | mod == "KEYBOARD" && ev == "\"c\""      = helper events (changeColor myState)
+    | mod == "KEYBOARD" && ev == "\"u\""      = helper events (linear myState)
+    | mod == "KEYBOARD" && ev == "\"i\""      = helper events (mouse myState)
     | mod == "KEYBOARD" && ev == "\"p\""      = helper events (diffusion myState)
+    | mod == "KEYBOARD" && ev == "\"y\""      = helper events (diffusion2 myState)
     | mod == "KEYBOARD" && ev == "\"w\""      = helper events (switchlevel myState)
     | mod == "KEYBOARD"                       = helper events (move dim ev myState )
     | otherwise                               = helper events (id myState)
@@ -219,4 +222,4 @@ anStatus = MyState (0, 0) 3 [] [] level_list 0 3
 --
 ipAdress = ["127.0.0.1","134.28.70.172"]
 main :: IO ()
-main = Sock.withSocketsDo $ runMate (Config (fromJust $ parseAddress $ ipAdress !! 0) 1337 dim (Just 500000) False []) eventTest anStatus
+main = Sock.withSocketsDo $ runMate (Config (fromJust $ parseAddress $ ipAdress !! 0) 1337 dim (Just 50000) False []) eventTest anStatus
