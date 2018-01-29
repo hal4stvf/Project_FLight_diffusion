@@ -48,11 +48,12 @@ diffusion2 myState = myState {
 diffOperator :: (Int,Int) -> Pixel -> [((Int,Int),Pixel)] -> [[(Int,Int)]]
 diffOperator point color picture 
  = filter (not . null) $ getSubset (thesePixel point (picture $. point) picture) (diffOP point )
+
 diffOperator2 :: (Int,Int) -> Pixel -> [((Int,Int),Pixel)] -> [[(Int,Int)]]
 diffOperator2 point color picture 
  = filter (not . null) $ getSubset (justallPixel point (picture $. point) picture) (diffOP point )
 --
---------------------------------------------------
+---------------------------------------------------
 
 ---------------------------------------------------
 {------------------------------------------------------------------------------}
@@ -85,6 +86,24 @@ difmat k = foldr (++) [] [ f n (pointGenerate n)  | n <- [0..k]]
 -- diffOP für ein ganzes Bild ausgehend von einem Punkt
 -- für eine ganzes Bild
 
+--
+--
+diffOPe point = map chooseMv (difmat 29 )
+  where 
+    mapEach::[Int -> Int -> (Int,Int) -> (Int,Int)] -> [(Int,Int)] -> [(Int,Int)]
+    mapEach [] _ = []
+    mapEach _ [] = []
+    mapEach (f:fs) ((n,m):xs) | (f n m point == point) = mapEach fs xs 
+--                              | (n == 0 && m == 0) = (f n m point) : mapEach fs xs 
+                              | otherwise = (f n m point ) : mapEach fs xs 
+--    chooseMv = mapEach movingList
+    chooseMv xs | length xs == 4   = mapEach movingList xs
+                | length xs == 8   = mapEach movingList2 xs
+------------------------------
+-- Another Version.					 |
+-- Remove in working version |
+------------------------------
+
 diffOP point  = filter (not . null) [g ys point | ys <- (difmat 29)]
   where 
   g ys point 
@@ -95,6 +114,8 @@ diffOP point  = filter (not . null) [g ys point | ys <- (difmat 29)]
   f mv n m p | (n == 0 && m == 0) = True
              | mv n m p == p      = False
              | otherwise          = True
+--
+--------------------------------------------------
 
 
 {------------------------------------------------------------------------------}
@@ -108,6 +129,7 @@ diffOP point  = filter (not . null) [g ys point | ys <- (difmat 29)]
 -- Hier einfache Version. 
 -- wählt einfach alle Felder mit dieser Farbe aus
 justallPixel point color = map (\ (p,c) -> p) . filter (\(p,c) -> c == color) 
+
 --
 -- das Spielfeld abgeht ... 
 
@@ -181,25 +203,29 @@ east  = eastk 1
 -- Hilfsfunktion zum "iterieren" über die moves in verschiedene Richtung
 ita f g x y p = f x (g y p) 
 
+ne :: Int -> Int -> (Int,Int) -> (Int,Int)
 ne n m p 
   | checkFormv northk eastk n m p  = ita northk eastk n m p 
   | otherwise                          = p
+nw :: Int -> Int -> (Int,Int) -> (Int,Int)
 nw n m p 
   | checkFormv northk westk n m p  = ita northk westk n m p 
   | otherwise                        = p
+ws :: Int -> Int -> (Int,Int) -> (Int,Int)
 ws n m p 
   | checkFormv westk southk n m p  = (westk n . southk m) p 
   | otherwise                       = p
-se n m p 
-  | checkFormv southk eastk n m p  = ita eastk southk n m p 
+es :: Int -> Int -> (Int,Int) -> (Int,Int)
+es n m p 
+  | checkFormv eastk southk n m p  = ita eastk southk n m p 
   | otherwise                          = p
 
 checkFormv f g n m p | (f n p /= p || n == 0) && (g m p /= p || m == 0) = True
                      | otherwise                                        = False
 
 -- hier über muss gecyclt werden
-movingList = [nw,ne,ws,se]
-movingList2 = [nw,nw,ne,ne,ws,ws,se,se]
+movingList = [nw,ne,ws,es]
+movingList2 = [nw,nw,ne,ne,ws,ws,es,es]
 
 {------------------------------------------------------------------------------}
 

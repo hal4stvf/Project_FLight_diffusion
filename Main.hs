@@ -222,4 +222,4 @@ anStatus = MyState (0, 0) 3 [] [] level_list 0 3
 --
 ipAdress = ["127.0.0.1","134.28.70.172"]
 main :: IO ()
-main = Sock.withSocketsDo $ runMate (Config (fromJust $ parseAddress $ ipAdress !! 0) 1337 dim (Just 50000) False []) eventTest anStatus
+main = Sock.withSocketsDo $ runMate (Config (fromJust $ parseAddress $ ipAdress !! 0) 1337 dim (Just 20000) False []) eventTest anStatus
